@@ -1,6 +1,6 @@
 package com.kovtun.moneytransfer.handler;
 
-import com.kovtun.moneytransfer.pojo.User;
+import com.kovtun.moneytransfer.dto.User;
 
 class ReqHandler {
     /**
