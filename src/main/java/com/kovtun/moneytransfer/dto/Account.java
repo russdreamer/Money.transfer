@@ -3,21 +3,21 @@ package com.kovtun.moneytransfer.dto;
 public class Account {
     private long id;
     private long account;
-    private long balance;
+    private long amount;
     private String currency;
 
     public Account() {}
 
-    public Account(long account, long balance, String currency) {
+    public Account(long account, long amount, String currency) {
         this.account = account;
-        this.balance = balance;
+        this.amount = amount;
         this.currency = currency;
     }
 
-    public Account(long id, long account, long balance, String currency) {
+    public Account(long id, long account, long amount, String currency) {
         this.id = id;
         this.account = account;
-        this.balance = balance;
+        this.amount = amount;
         this.currency = currency;
     }
 
@@ -29,8 +29,8 @@ public class Account {
         return account;
     }
 
-    public long getBalance() {
-        return balance;
+    public long getAmount() {
+        return amount;
     }
 
     public String getCurrency() {

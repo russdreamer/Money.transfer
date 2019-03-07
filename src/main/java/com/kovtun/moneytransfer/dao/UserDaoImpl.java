@@ -16,7 +16,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public long createUser(User user) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(CREATE_USER, Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement statement = connection.prepareStatement(CREATE_USER_QUERY, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, user.getFirstName());
         statement.setString(2, user.getSecondName());
         statement.setString(3, user.getPatronymicName());
@@ -39,19 +39,16 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public boolean deleteUSer(long userId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(DELETE_USER);
+        PreparedStatement statement = connection.prepareStatement(DELETE_USER_QUERY);
         statement.setLong(1, userId);
         int affectedRows = statement.executeUpdate();
 
-        if (affectedRows == 1) {
-            return true;
-        }
-        else return false;
+        return affectedRows == 1;
     }
 
     @Override
     public User getUser(long userId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(GET_USER_BY_ID);
+        PreparedStatement statement = connection.prepareStatement(GET_USER_BY_ID_QUERY);
         statement.setLong(1, userId);
         ResultSet result = statement.executeQuery();
 
@@ -61,6 +58,12 @@ public class UserDaoImpl implements UserDao {
         else return null;
     }
 
+    /**
+     * create User entity from database result Set
+     * @param result database result Set
+     * @return User entity
+     * @throws SQLException if result Set doesn't contain necessary columns
+     */
     private User createUserFromResultSet(ResultSet result) throws SQLException {
         long id = result.getLong(ID);
         String firstName = result.getString(FIRST_NAME);
