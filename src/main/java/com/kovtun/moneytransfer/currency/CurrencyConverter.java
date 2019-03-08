@@ -1,18 +1,25 @@
 package com.kovtun.moneytransfer.currency;
 
-public class CurrencyConverter {
-    private long rubRate;
-    private long usdRate;
-    private long eurRate;
+import java.io.IOException;
 
-    {
+public class CurrencyConverter {
+    private double rubRate;
+    private double usdRate;
+    private double eurRate;
+
+    public CurrencyConverter() throws IOException {
         defineRates();
     }
 
-    private void defineRates() {
-        rubRate = 1;
-        usdRate = 65;
-        eurRate = 70;
+    /**
+     * set all currency rates
+     * @throws IOException if rates source is unavailable
+     */
+    private void defineRates() throws IOException {
+        CurrencyJsonReader reader = new CurrencyJsonReader();
+        rubRate = reader.getRubRate();
+        usdRate = reader.getUsdRate();
+        eurRate = reader.getEurRate();
     }
 
     /**
@@ -35,15 +42,19 @@ public class CurrencyConverter {
      * get amount of money in target currency
      * @param currency source currency
      * @param amount amount of money in source currency
-     * @param targetCurrency target currency
+     * @param targetRate target currency rate
      * @return amount of money in target currency
      */
-    private long getTargetAmount(Currency currency, long amount, long targetCurrency){
+    private long getTargetAmount(Currency currency, long amount, double targetRate){
+        Double targetAmount;
+
         switch (currency){
-            case RUB: return amount * rubRate / targetCurrency;
-            case USD: return amount * usdRate / targetCurrency;
-            case EUR: return amount * eurRate / targetCurrency;
+            case RUB: targetAmount =  amount * rubRate / targetRate; break;
+            case USD: targetAmount =  amount * usdRate / targetRate; break;
+            case EUR: targetAmount =  amount * eurRate / targetRate; break;
             default: throw new IllegalArgumentException();
         }
+
+        return targetAmount.longValue();
     }
 }

@@ -1,4 +1,4 @@
-package com.kovtun.moneytransfer;
+package com.kovtun.moneytransfer.validator;
 
 import com.kovtun.moneytransfer.currency.Currency;
 import com.kovtun.moneytransfer.currency.CurrencyConverter;

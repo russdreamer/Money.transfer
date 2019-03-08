@@ -6,12 +6,13 @@ import com.kovtun.moneytransfer.database.DBConnection;
 import com.kovtun.moneytransfer.dto.Account;
 import com.kovtun.moneytransfer.dto.User;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.kovtun.moneytransfer.ParamValidator.*;
+import static com.kovtun.moneytransfer.validator.ParamValidator.*;
 
 public class DaoManager {
     /**
@@ -152,7 +153,7 @@ public class DaoManager {
             connection.commit();
             return "Success";
 
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             return "database access error occurs";
         }
     }
@@ -189,7 +190,7 @@ public class DaoManager {
             connection.commit();
             return "Success";
 
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             return "database access error occurs";
         }
     }
