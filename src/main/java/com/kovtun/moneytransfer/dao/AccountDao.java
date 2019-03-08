@@ -1,6 +1,6 @@
 package com.kovtun.moneytransfer.dao;
 
-import com.kovtun.moneytransfer.constant.Currency;
+import com.kovtun.moneytransfer.currency.Currency;
 import com.kovtun.moneytransfer.dto.Account;
 
 import java.sql.SQLException;
@@ -47,5 +47,5 @@ public interface AccountDao {
      * @return <code>true</code> if success, <code>false</code> if failed
      * @throws SQLException if a database access error occurs
      */
-    boolean updateAccountBalance(long accountId, long newAmount) throws SQLException;
+    boolean updateAccountAmount(long accountId, long newAmount) throws SQLException;
 }

@@ -10,52 +10,58 @@ import static com.kovtun.moneytransfer.constant.RequestConstants.*;
 public class UserDaoImpl implements UserDao {
     private Connection connection;
 
-    public UserDaoImpl(Connection connection) {
+    UserDaoImpl(Connection connection) {
         this.connection = connection;
     }
 
     @Override
     public long createUser(User user) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(CREATE_USER_QUERY, Statement.RETURN_GENERATED_KEYS);
-        statement.setString(1, user.getFirstName());
-        statement.setString(2, user.getSecondName());
-        statement.setString(3, user.getPatronymicName());
-        statement.setString(4, user.getPassportNum());
-        statement.setDate(5, user.getBirthdate());
-        int affectedRows = statement.executeUpdate();
-        if (affectedRows == 0)
-            throw new SQLException("Creating user failed, no affected rows");
+        try (PreparedStatement statement = connection.prepareStatement(CREATE_USER_QUERY, Statement.RETURN_GENERATED_KEYS)){
 
-        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                return generatedKeys.getLong(ID);
-            }
-            else {
-                throw new SQLException("Creating user failed, no ID obtained");
+            statement.setString(1, user.getFirstName());
+            statement.setString(2, user.getSecondName());
+            statement.setString(3, user.getPatronymicName());
+            statement.setString(4, user.getPassportNum());
+            statement.setDate(5, user.getBirthdate());
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0)
+                throw new SQLException("Creating user failed, no affected rows");
+
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getLong(ID);
+                }
+                else {
+                    throw new SQLException("Creating user failed, no ID obtained");
+                }
             }
         }
-
     }
 
     @Override
-    public boolean deleteUSer(long userId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(DELETE_USER_QUERY);
-        statement.setLong(1, userId);
-        int affectedRows = statement.executeUpdate();
+    public boolean deleteUser(long userId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(DELETE_USER_QUERY)){
 
-        return affectedRows == 1;
+            statement.setLong(1, userId);
+            int affectedRows = statement.executeUpdate();
+
+            return affectedRows == 1;
+        }
     }
 
     @Override
     public User getUser(long userId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(GET_USER_BY_ID_QUERY);
-        statement.setLong(1, userId);
-        ResultSet result = statement.executeQuery();
+        try (PreparedStatement statement = connection.prepareStatement(GET_USER_BY_ID_QUERY)){
 
-        if (result.next()){
-            return createUserFromResultSet(result);
+            statement.setLong(1, userId);
+            ResultSet result = statement.executeQuery();
+
+            if (result.next()){
+                return createUserFromResultSet(result);
+            }
+            else return null;
         }
-        else return null;
     }
 
     /**

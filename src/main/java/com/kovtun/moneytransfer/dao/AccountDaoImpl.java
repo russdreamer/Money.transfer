@@ -1,6 +1,6 @@
 package com.kovtun.moneytransfer.dao;
 
-import com.kovtun.moneytransfer.constant.Currency;
+import com.kovtun.moneytransfer.currency.Currency;
 import com.kovtun.moneytransfer.dto.Account;
 
 import java.sql.Connection;
@@ -19,69 +19,79 @@ public class AccountDaoImpl implements AccountDao {
     private Connection connection;
     private static AtomicLong accountNumber = new AtomicLong(FIRST_ACCOUNT_NUMBER);
 
-    public AccountDaoImpl(Connection connection) {
+    AccountDaoImpl(Connection connection) {
         this.connection = connection;
     }
 
     @Override
     public long createAccount(long userId, Currency currency) throws SQLException {
-        long accountNum = getNewAccountNumber();
-        PreparedStatement statement = connection.prepareStatement(CREATE_ACCOUNT_QUERY);
-        statement.setLong(1, accountNum);
-        statement.setLong(2, 0L);
-        statement.setString(3, currency.name());
-        statement.setLong(4, userId);
+        try (PreparedStatement statement = connection.prepareStatement(CREATE_ACCOUNT_QUERY)) {
 
-        int affectedRows = statement.executeUpdate();
-        if (affectedRows == 0)
-            throw new SQLException("Creating user failed, no affected rows");
+            long accountNum = getNewAccountNumber();
+            statement.setLong(1, accountNum);
+            statement.setLong(2, 0L);
+            statement.setString(3, currency.name());
+            statement.setLong(4, userId);
 
-        return accountNum;
+            int affectedRows = statement.executeUpdate();
+            if (affectedRows == 0)
+                throw new SQLException("Creating user failed, no affected rows");
+
+            return accountNum;
+        }
     }
 
     @Override
     public boolean deleteAccount(long accountId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(DELETE_ACCOUNT_QUERY);
-        statement.setLong(1, accountId);
-        int affectedRows = statement.executeUpdate();
+        try (PreparedStatement statement = connection.prepareStatement(DELETE_ACCOUNT_QUERY)){
 
-        return affectedRows == 1;
+            statement.setLong(1, accountId);
+            int affectedRows = statement.executeUpdate();
+
+            return affectedRows == 1;
+        }
     }
 
     @Override
     public Account getAccountById(long accountId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(GET_ACCOUNT_BY_ID_QUERY);
-        statement.setLong(1, accountId);
-        ResultSet result = statement.executeQuery();
+        try (PreparedStatement statement = connection.prepareStatement(GET_ACCOUNT_BY_ID_QUERY)){
 
-        if (result.next()){
-            return createAccountFromResultSet(result);
+            statement.setLong(1, accountId);
+            ResultSet result = statement.executeQuery();
+
+            if (result.next()){
+                return createAccountFromResultSet(result);
+            }
+            else return null;
         }
-        else return null;
     }
 
     @Override
     public Set<Account> getUserAccounts(long userId) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(GET_USER_ACCOUNTS_QUERY);
-        statement.setLong(1, userId);
-        ResultSet result = statement.executeQuery();
+        try (PreparedStatement statement = connection.prepareStatement(GET_USER_ACCOUNTS_QUERY)){
 
-        Set<Account> accounts = new HashSet<>();
-        while(result.next()){
-            Account account = createAccountFromResultSet(result);
-            accounts.add(account);
+            statement.setLong(1, userId);
+            ResultSet result = statement.executeQuery();
+
+            Set<Account> accounts = new HashSet<>();
+            while(result.next()){
+                Account account = createAccountFromResultSet(result);
+                accounts.add(account);
+            }
+            return accounts;
         }
-        return accounts;
     }
 
     @Override
-    public boolean updateAccountBalance(long accountId, long newAmount) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(UPDATE_ACCOUNT_AMOUNT);
-        statement.setLong(1, newAmount);
-        statement.setLong(2, accountId);
-        int affectedRows = statement.executeUpdate();
+    public boolean updateAccountAmount(long accountId, long newAmount) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(UPDATE_ACCOUNT_AMOUNT)){
 
-        return affectedRows == 1;
+            statement.setLong(1, newAmount);
+            statement.setLong(2, accountId);
+            int affectedRows = statement.executeUpdate();
+
+            return affectedRows == 1;
+        }
     }
 
     /**
@@ -97,7 +107,7 @@ public class AccountDaoImpl implements AccountDao {
         String currency = result.getString(CURRENCY);
         long holder = result.getLong(HOLDER_ID);
 
-        return new Account(id, account, amount, currency, holder);
+        return new Account(id, account, amount, Currency.valueOf(currency), holder);
     }
 
     /**

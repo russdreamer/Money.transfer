@@ -1,4 +1,4 @@
-package com.kovtun.moneytransfer.constant;
+package com.kovtun.moneytransfer.currency;
 
 public enum Currency {
     RUB,

@@ -1,5 +1,6 @@
 package com.kovtun.moneytransfer.handler;
 
+import com.kovtun.moneytransfer.dao.DaoManager;
 import com.kovtun.moneytransfer.dto.User;
 import spark.Request;
 
@@ -37,7 +38,7 @@ public class Controller {
     private String createAccount(Request req) {
         User user = getUser(req);
         String currency = req.queryParams(CURRENCY);
-        return ReqHandler.createAccount(user, currency);
+        return DaoManager.createAccount(user, currency);
     }
 
     /**
@@ -48,7 +49,7 @@ public class Controller {
     private String deleteAccount(Request req) {
         User user = getUser(req);
         String accountNum = req.queryParams(ACCOUNT_NUMBER);
-        return ReqHandler.deleteAccount(user, accountNum);
+        return DaoManager.deleteAccount(user, accountNum);
     }
 
     /**
@@ -62,7 +63,7 @@ public class Controller {
         String targetAccount = req.queryParams(TARGET_ACCOUNT);
         String amount = req.queryParams(AMOUNT);
         String currency = req.queryParams(CURRENCY);
-        return ReqHandler.transferMoney(user, accountNum, targetAccount, amount, currency);
+        return DaoManager.transferMoney(user, accountNum, targetAccount, amount, currency);
     }
 
     /**
@@ -74,7 +75,7 @@ public class Controller {
         String accountNum = req.queryParams(ACCOUNT_NUMBER);
         String amount = req.queryParams(AMOUNT);
         String currency = req.queryParams(CURRENCY);
-        return ReqHandler.topUpAccount(accountNum, amount, currency);
+        return DaoManager.topUpAccount(accountNum, amount, currency);
     }
 
     /**

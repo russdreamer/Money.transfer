@@ -19,7 +19,7 @@ public interface UserDao {
      * @return <code>true</code> if success, <code>false</code> if there is no user with this ID
      * @throws SQLException if a database access error occurs
      */
-    boolean deleteUSer(long userId) throws SQLException;
+    boolean deleteUser(long userId) throws SQLException;
 
     /**
      * get an account holder user by id

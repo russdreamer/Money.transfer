@@ -2,8 +2,8 @@ package com.kovtun.moneytransfer.database;
 
 import java.sql.*;
 
-import static com.kovtun.moneytransfer.constant.DataBaseConstants.CREATE_ACCOUNTS_TABLE;
-import static com.kovtun.moneytransfer.constant.DataBaseConstants.CREATE_USERS_TABLE;
+import static com.kovtun.moneytransfer.constant.DataBaseConstants.CREATE_ACCOUNTS_TABLE_QUERY;
+import static com.kovtun.moneytransfer.constant.DataBaseConstants.CREATE_USERS_TABLE_QUERY;
 
 public class DBTables {
     /**
@@ -12,8 +12,8 @@ public class DBTables {
      */
     public static boolean createTables(){
         return
-                createTable(CREATE_USERS_TABLE) &&
-                createTable(CREATE_ACCOUNTS_TABLE);
+                createTable(CREATE_USERS_TABLE_QUERY) &&
+                createTable(CREATE_ACCOUNTS_TABLE_QUERY);
     }
 
     /**
