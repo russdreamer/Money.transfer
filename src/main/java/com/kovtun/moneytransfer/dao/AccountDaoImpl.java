@@ -78,7 +78,7 @@ public class AccountDaoImpl implements AccountDao {
     public boolean updateAccountBalance(long accountId, long newAmount) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(UPDATE_ACCOUNT_AMOUNT);
         statement.setLong(1, newAmount);
-        statement.setLong(1, accountId);
+        statement.setLong(2, accountId);
         int affectedRows = statement.executeUpdate();
 
         return affectedRows == 1;
@@ -95,8 +95,9 @@ public class AccountDaoImpl implements AccountDao {
         long account = result.getLong(ACCOUNT_NUMBER);
         long amount = result.getLong(AMOUNT);
         String currency = result.getString(CURRENCY);
+        long holder = result.getLong(HOLDER_ID);
 
-        return new Account(id, account, amount, currency);
+        return new Account(id, account, amount, currency, holder);
     }
 
     /**
