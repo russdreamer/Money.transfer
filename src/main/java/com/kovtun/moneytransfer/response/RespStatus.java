@@ -1,6 +1,6 @@
 package com.kovtun.moneytransfer.response;
 
-public enum ResponseStatus {
+public enum RespStatus {
     SUCCESS,
     ERROR
 }

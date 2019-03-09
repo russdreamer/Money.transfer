@@ -5,6 +5,7 @@ import com.kovtun.moneytransfer.currency.CurrencyConverter;
 import com.kovtun.moneytransfer.database.DBConnection;
 import com.kovtun.moneytransfer.dto.Account;
 import com.kovtun.moneytransfer.dto.User;
+import com.kovtun.moneytransfer.response.*;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -12,25 +13,28 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.kovtun.moneytransfer.constant.RespConstants.*;
 import static com.kovtun.moneytransfer.validator.ParamValidator.*;
 
 public class DaoManager {
     /**
      * create new bank account. If user is new, it will also create the user
      * @param user client whose account is going to be created
-     * @param accountCurrency client's account currency
+     * @param accountCurrencyStr client's account currency
      * @return result response as json
      */
-    public static String createAccount(User user, String accountCurrency) {
-        if (isUserFieldsNotValid(user) || isCurrencyNotValid(accountCurrency))
-            return "Wrong params";
+    public static String createAccount(User user, String accountCurrencyStr) {
+        if (isUserFieldsNotValid(user) || isCurrencyNotValid(accountCurrencyStr))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         if (isUserUnderage(user))
-            return "user is underage";
+            return new Response(RespStatus.ERROR, UNDERAGE, null).toJson();
+
+        Currency accountCurrency = Currency.valueOf(accountCurrencyStr);
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
-                throw new SQLException();
+                throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
 
@@ -41,15 +45,18 @@ public class DaoManager {
 
             if (existedUser == null) {
                 long userId = userDao.createUser(user);
-                newAccountNum = accountDao.createAccount(userId, Currency.valueOf(accountCurrency));
+                newAccountNum = accountDao.createAccount(userId, accountCurrency);
             }
-            else newAccountNum = accountDao.createAccount(existedUser.getId(), Currency.valueOf(accountCurrency));
+            else newAccountNum = accountDao.createAccount(existedUser.getId(), accountCurrency);
 
             connection.commit();
-            return "Success" + newAccountNum;
+            return new Response(RespStatus.SUCCESS, CREATE_SUCCESS,
+                    new CreateAccountResult(newAccountNum, 0, accountCurrency))
+                    .toJson();
 
         } catch (SQLException e) {
-            return "database access error occurs";
+            e.printStackTrace();
+            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -60,23 +67,23 @@ public class DaoManager {
      */
     public static String deleteAccount(User user, String userAccount) {
         if (isUserFieldsNotValid(user) || isNotValidLong(userAccount))
-            return "Wrong params";
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
-                throw new SQLException();
+                throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
             /* check if user and account are related */
             UserDao userDao = new UserDaoImpl(connection);
             User existedUser = userDao.getUser(user.getId());
             if (existedUser == null)
-                return "There is no user found with these parameters";
+                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
             AccountDao accountDao = new AccountDaoImpl(connection);
             Set<Account> accountSet = accountDao.getUserAccounts(existedUser.getId());
             if (accountSet.isEmpty())
-                return "No user's accounts are found";
+                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
             long accountNum = Long.valueOf(userAccount);
             Optional<Account> account = accountSet.parallelStream()
@@ -85,7 +92,7 @@ public class DaoManager {
                     .findFirst();
 
             if ( !account.isPresent() )
-                return "User account with this number is not found";
+                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
             if (accountSet.size() == 1)
                 userDao.deleteUser(existedUser.getId());
@@ -93,10 +100,14 @@ public class DaoManager {
             accountDao.deleteAccount(accountNum);
 
             connection.commit();
-            return "Success";
+
+            Result result = new DeleteAccountResult(accountNum, account.get().getAmount(),
+                    account.get().getCurrency(), accountSet.size() > 1);
+            return new Response(RespStatus.SUCCESS, DELETE_SUCCESS, result).toJson();
 
         } catch (SQLException e) {
-            return "database access error occurs";
+            e.printStackTrace();
+            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -111,7 +122,7 @@ public class DaoManager {
      */
     public static String transferMoney(User user, String userAccountStr, String targetAccountNumStr, String amountStr, String currencyStr) {
         if (isUserFieldsNotValid(user) || isNotValidLong(userAccountStr, targetAccountNumStr, amountStr) || isCurrencyNotValid(currencyStr))
-            return "Wrong params";
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         long userAccountNum = Long.valueOf(userAccountStr);
         long targetAccountNum = Long.valueOf(targetAccountNumStr);
@@ -120,41 +131,45 @@ public class DaoManager {
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
-                throw new SQLException();
+                throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
             /* check if user and account are related */
             UserDao userDao = new UserDaoImpl(connection);
             User existedUser = userDao.getUser(user.getId());
             if (existedUser == null)
-                return "There is no user found with these parameters";
+                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
             AccountDao accountDao = new AccountDaoImpl(connection);
             Account sourceAccount = accountDao.getAccountById(userAccountNum);
 
             if (sourceAccount == null || existedUser.getId() == sourceAccount.getHolderId())
-                return "User account with this number is not found";
+                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
             Account targetAccount = accountDao.getAccountById(targetAccountNum);
             if (targetAccount == null)
-                return "No target account is found";
+                return new Response(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
 
             /* money transfer */
             CurrencyConverter currentMoneyRate = new CurrencyConverter();
 
+            long newUserAmount;
             if ( isEnoughMoney(sourceAccount, currency, amount, currentMoneyRate) ){
-                updateUserBalance(accountDao, sourceAccount, 0 - amount, currency, currentMoneyRate);
+                newUserAmount = updateUserBalance(accountDao, sourceAccount, 0 - amount, currency, currentMoneyRate);
                 updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
             }
             else {
-                return "Not enough money for the operation";
+                return new Response(RespStatus.ERROR, NOT_ENOUGH_MONEY, null).toJson();
             }
 
             connection.commit();
-            return "Success";
+            return new Response(RespStatus.SUCCESS, MONEY_TRANSFER,
+                    new MoneyTransferResult(userAccountNum, newUserAmount, sourceAccount.getCurrency()))
+                    .toJson();
 
         } catch (SQLException | IOException e) {
-            return "database access error occurs";
+            e.printStackTrace();
+            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -167,7 +182,7 @@ public class DaoManager {
      */
     public static String topUpAccount(String accountNumStr, String amountStr, String currencyStr) {
         if ( isNotValidLong(accountNumStr, amountStr) || isCurrencyNotValid(currencyStr))
-            return "Wrong params";
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         long accountNum = Long.valueOf(accountNumStr);
         long amount = Long.valueOf(amountStr);
@@ -175,23 +190,26 @@ public class DaoManager {
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
-                throw new SQLException();
+                throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
             AccountDao accountDao = new AccountDaoImpl(connection);
             Account targetAccount = accountDao.getAccountById(accountNum);
 
             if (targetAccount == null)
-                return "No target account is found";
+                return new Response(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
 
             CurrencyConverter currentMoneyRate = new CurrencyConverter();
-            updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
+            long newAmount = updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
 
             connection.commit();
-            return "Success";
+            return new Response(RespStatus.SUCCESS, MONEY_TRANSFER,
+                    new MoneyTransferResult(accountNum, newAmount, targetAccount.getCurrency()))
+                    .toJson();
 
         } catch (SQLException | IOException e) {
-            return "database access error occurs";
+            e.printStackTrace();
+            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -204,9 +222,11 @@ public class DaoManager {
      * @param moneyRate current money rates
      * @throws SQLException if a database access error occurs
      */
-    private static void updateUserBalance(AccountDao accountDao, Account account, long amount, Currency currency, CurrencyConverter moneyRate) throws SQLException {
+    private static long updateUserBalance(AccountDao accountDao, Account account, long amount, Currency currency, CurrencyConverter moneyRate) throws SQLException {
         long amountInUserCur = moneyRate.convert(currency, amount, account.getCurrency());
         long newSourceAmount = account.getAmount() + amountInUserCur;
         accountDao.updateAccountAmount(account.getId(), newSourceAmount);
+
+        return newSourceAmount;
     }
 }

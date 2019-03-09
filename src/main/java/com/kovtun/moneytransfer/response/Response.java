@@ -4,16 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class Response {
-    private ResponseStatus status;
+    private RespStatus status;
     private String message;
     private Result result;
 
     /**
      * @param status response status
      * @param message server message
-     * @param result result of transaction
+     * @param result result of transaction; <code>null</code> if status is Error
      */
-    public Response(ResponseStatus status, String message, Result result) {
+    public Response(RespStatus status, String message, Result result) {
         this.status = status;
         this.message = message;
         this.result = result;
@@ -28,7 +28,7 @@ public class Response {
         return gson.toJson(this);
     }
 
-    public ResponseStatus getStatus() {
+    public RespStatus getStatus() {
         return status;
     }
 

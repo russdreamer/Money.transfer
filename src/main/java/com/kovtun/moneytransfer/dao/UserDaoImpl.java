@@ -6,6 +6,8 @@ import java.sql.*;
 
 import static com.kovtun.moneytransfer.constant.DataBaseConstants.*;
 import static com.kovtun.moneytransfer.constant.RequestConstants.*;
+import static com.kovtun.moneytransfer.constant.RespConstants.NO_AFFECTED_ROWS;
+import static com.kovtun.moneytransfer.constant.RespConstants.NO_ID_OBTAINED;
 
 public class UserDaoImpl implements UserDao {
     private Connection connection;
@@ -26,14 +28,14 @@ public class UserDaoImpl implements UserDao {
             int affectedRows = statement.executeUpdate();
 
             if (affectedRows == 0)
-                throw new SQLException("Creating user failed, no affected rows");
+                throw new SQLException(NO_AFFECTED_ROWS);
 
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     return generatedKeys.getLong(ID);
                 }
                 else {
-                    throw new SQLException("Creating user failed, no ID obtained");
+                    throw new SQLException(NO_ID_OBTAINED);
                 }
             }
         }

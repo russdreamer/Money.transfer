@@ -6,7 +6,7 @@ public class RequestConstants {
     public static final String DELETE_ACCOUNT = "/delete_account";
     public static final String TOP_UP = "/top_up_account";
 
-    public static String ID = "id";
+    public static final String ID = "id";
     public static final String FIRST_NAME = "first_name";
     public static final String SECOND_NAME = "second_name";
     public static final String PATRONYMIC_NAME = "patronymic_name";

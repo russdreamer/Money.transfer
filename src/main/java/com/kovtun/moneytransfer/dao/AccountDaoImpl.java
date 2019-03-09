@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.kovtun.moneytransfer.constant.DataBaseConstants.*;
 import static com.kovtun.moneytransfer.constant.RequestConstants.*;
+import static com.kovtun.moneytransfer.constant.RespConstants.NO_AFFECTED_ROWS;
 import static com.kovtun.moneytransfer.constant.ServerConstants.FIRST_ACCOUNT_NUMBER;
 
 public class AccountDaoImpl implements AccountDao {
@@ -35,7 +36,7 @@ public class AccountDaoImpl implements AccountDao {
 
             int affectedRows = statement.executeUpdate();
             if (affectedRows == 0)
-                throw new SQLException("Creating user failed, no affected rows");
+                throw new SQLException(NO_AFFECTED_ROWS);
 
             return accountNum;
         }
