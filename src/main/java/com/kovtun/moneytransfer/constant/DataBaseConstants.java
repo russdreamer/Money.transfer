@@ -29,7 +29,7 @@ public class DataBaseConstants {
     public static final String GET_USER_BY_ID_QUERY =  "SELECT * FROM Users WHERE id = ?";
     public static final String CREATE_ACCOUNT_QUERY =  "INSERT INTO Accounts VALUES (NULL, ?, ?, ?, ?)";
     public static final String DELETE_ACCOUNT_QUERY =  "DELETE FROM Accounts WHERE id = ?";
-    public static final String GET_ACCOUNT_BY_ID_QUERY =  "SELECT * FROM Accounts WHERE id = ?";
+    public static final String GET_ACCOUNT_BY_ID_QUERY =  "SELECT * FROM Accounts WHERE " + ACCOUNT_NUMBER + " = ?";
     public static final String GET_USER_ACCOUNTS_QUERY =  "SELECT * FROM Accounts WHERE " + HOLDER_ID + " = ?";
     public static final String UPDATE_ACCOUNT_AMOUNT =  "UPDATE Accounts SET " + AMOUNT + " = ? WHERE id = ?";
 }

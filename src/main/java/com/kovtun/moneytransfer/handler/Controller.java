@@ -101,7 +101,6 @@ public class Controller {
         try {
             return Date.valueOf(param);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
