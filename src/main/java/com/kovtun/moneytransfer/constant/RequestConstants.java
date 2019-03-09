@@ -4,6 +4,7 @@ public class RequestConstants {
     public static final String CREATE_ACCOUNT = "/create_account";
     public static final String TRANSFER_MONEY = "/transfer_money";
     public static final String DELETE_ACCOUNT = "/delete_account";
+    public static final String GET_ACCOUNTS = "/get_accounts";
     public static final String TOP_UP = "/top_up_account";
 
     public static final String ID = "id";

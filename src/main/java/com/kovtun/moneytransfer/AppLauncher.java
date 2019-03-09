@@ -1,7 +1,7 @@
 package com.kovtun.moneytransfer;
 
 import com.kovtun.moneytransfer.database.DBTables;
-import com.kovtun.moneytransfer.handler.Controller;
+import com.kovtun.moneytransfer.controller.Controller;
 
 public class AppLauncher {
 

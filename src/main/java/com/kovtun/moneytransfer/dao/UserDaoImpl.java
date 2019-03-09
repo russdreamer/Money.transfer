@@ -53,10 +53,14 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User getUser(long userId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(GET_USER_BY_ID_QUERY)){
+    public User getUser(User user) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(GET_USER_QUERY)){
 
-            statement.setLong(1, userId);
+            statement.setString(1, user.getFirstName());
+            statement.setString(2, user.getSecondName());
+            statement.setString(3, user.getPatronymicName());
+            statement.setString(4, user.getPassportNum());
+            statement.setDate(5, user.getBirthdate());
             ResultSet result = statement.executeQuery();
 
             if (result.next()){

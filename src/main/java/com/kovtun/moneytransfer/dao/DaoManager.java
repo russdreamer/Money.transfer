@@ -10,8 +10,10 @@ import com.kovtun.moneytransfer.response.*;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.kovtun.moneytransfer.constant.RespConstants.*;
 import static com.kovtun.moneytransfer.validator.ParamValidator.*;
@@ -20,17 +22,12 @@ public class DaoManager {
     /**
      * create new bank account. If user is new, it will also create the user
      * @param user client whose account is going to be created
-     * @param accountCurrencyStr client's account currency
+     * @param accountCurrency client's account currency
      * @return result response as json
      */
-    public static String createAccount(User user, String accountCurrencyStr) {
-        if (isUserFieldsNotValid(user) || isCurrencyNotValid(accountCurrencyStr))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
-
+    public static String createAccount(User user, Currency accountCurrency) {
         if (isUserUnderage(user))
             return new Response(RespStatus.ERROR, UNDERAGE, null).toJson();
-
-        Currency accountCurrency = Currency.valueOf(accountCurrencyStr);
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
@@ -39,7 +36,7 @@ public class DaoManager {
             connection.setAutoCommit(false);
 
             UserDao userDao = new UserDaoImpl(connection);
-            User existedUser = userDao.getUser(user.getId());
+            User existedUser = userDao.getUser(user);
             long newAccountNum;
             AccountDao accountDao = new AccountDaoImpl(connection);
 
@@ -65,40 +62,29 @@ public class DaoManager {
      * @param user client whose account is going to be deleted
      * @return result response as json
      */
-    public static String deleteAccount(User user, String userAccount) {
-        if (isUserFieldsNotValid(user) || isNotValidLong(userAccount))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
-
+    public static String deleteAccount(User user, long accountNum) {
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
                 throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
-            /* check if user and account are related */
-            UserDao userDao = new UserDaoImpl(connection);
-            User existedUser = userDao.getUser(user.getId());
-            if (existedUser == null)
-                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
-            AccountDao accountDao = new AccountDaoImpl(connection);
-            Set<Account> accountSet = accountDao.getUserAccounts(existedUser.getId());
-            if (accountSet.isEmpty())
+            Set<Account> accountSet = getUserAccounts(connection, user);
+            if (accountSet == null || accountSet.isEmpty())
                 return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
-            long accountNum = Long.valueOf(userAccount);
             Optional<Account> account = accountSet.parallelStream()
-                    .filter(it ->
-                            it.getAccount() == accountNum)
+                    .filter(it -> it.getAccount() == accountNum)
                     .findFirst();
 
             if ( !account.isPresent() )
                 return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
+            /* if it is the only user's account - delete user as well */
             if (accountSet.size() == 1)
-                userDao.deleteUser(existedUser.getId());
+                new UserDaoImpl(connection).deleteUser(account.get().getHolderId());
 
-            accountDao.deleteAccount(accountNum);
-
+            new AccountDaoImpl(connection).deleteAccount(accountNum);
             connection.commit();
 
             Result result = new DeleteAccountResult(accountNum, account.get().getAmount(),
@@ -113,54 +99,35 @@ public class DaoManager {
 
     /**
      * transfer money between accounts of the only user
-     * @param user client whose money are being moved between his accounts
-     * @param userAccountStr client account to be charged
-     * @param targetAccountNumStr account to be refilled
-     * @param amountStr amount of money
-     * @param currencyStr currency in which the transaction is performed
+     * @param user client whose money are being charged
+     * @param userAccountNum client account to be charged
+     * @param targetAccountNum account to be refilled
+     * @param amount amount of money
+     * @param currency currency in which the transaction is performed
      * @return result response as json
      */
-    public static String transferMoney(User user, String userAccountStr, String targetAccountNumStr, String amountStr, String currencyStr) {
-        if (isUserFieldsNotValid(user) || isNotValidLong(userAccountStr, targetAccountNumStr, amountStr) || isCurrencyNotValid(currencyStr))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
-
-        long userAccountNum = Long.valueOf(userAccountStr);
-        long targetAccountNum = Long.valueOf(targetAccountNumStr);
-        long amount = Long.valueOf(amountStr);
-        Currency currency = Currency.valueOf(currencyStr);
-
+    public static String transferMoney(User user, long userAccountNum, long targetAccountNum, long amount, Currency currency) {
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
                 throw new SQLException(CONNECTION_NULL);
 
             connection.setAutoCommit(false);
-            /* check if user and account are related */
-            UserDao userDao = new UserDaoImpl(connection);
-            User existedUser = userDao.getUser(user.getId());
-            if (existedUser == null)
-                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
 
-            AccountDao accountDao = new AccountDaoImpl(connection);
-            Account sourceAccount = accountDao.getAccountById(userAccountNum);
-
-            if (sourceAccount == null || existedUser.getId() == sourceAccount.getHolderId())
+            Account sourceAccount = getUserAccount(connection, user, userAccountNum);
+            if (sourceAccount == null)
                 return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
+            AccountDao accountDao = new AccountDaoImpl(connection);
             Account targetAccount = accountDao.getAccountById(targetAccountNum);
             if (targetAccount == null)
                 return new Response(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
 
-            /* money transfer */
             CurrencyConverter currentMoneyRate = new CurrencyConverter();
-
-            long newUserAmount;
-            if ( isEnoughMoney(sourceAccount, currency, amount, currentMoneyRate) ){
-                newUserAmount = updateUserBalance(accountDao, sourceAccount, 0 - amount, currency, currentMoneyRate);
-                updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
-            }
-            else {
+            if ( isEnoughMoney(sourceAccount, currency, amount, currentMoneyRate) )
                 return new Response(RespStatus.ERROR, NOT_ENOUGH_MONEY, null).toJson();
-            }
+
+            long newUserAmount = updateUserBalance(accountDao, sourceAccount, 0 - amount, currency, currentMoneyRate);
+            updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
 
             connection.commit();
             return new Response(RespStatus.SUCCESS, MONEY_TRANSFER,
@@ -175,19 +142,12 @@ public class DaoManager {
 
     /**
      * refilling account balance
-     * @param accountNumStr client account to be refilled
-     * @param amountStr amount of money
-     * @param currencyStr currency in which the transaction is performed
+     * @param accountNum client account to be refilled
+     * @param amount amount of money
+     * @param currency currency in which the transaction is performed
      * @return result response as json
      */
-    public static String topUpAccount(String accountNumStr, String amountStr, String currencyStr) {
-        if ( isNotValidLong(accountNumStr, amountStr) || isCurrencyNotValid(currencyStr))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
-
-        long accountNum = Long.valueOf(accountNumStr);
-        long amount = Long.valueOf(amountStr);
-        Currency currency = Currency.valueOf(currencyStr);
-
+    public static String topUpAccount(long accountNum, long amount, Currency currency) {
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
                 throw new SQLException(CONNECTION_NULL);
@@ -214,6 +174,38 @@ public class DaoManager {
     }
 
     /**
+     * get all client's accounts with detailed account info
+     * @param user accounts holder
+     * @return result response as json
+     */
+    public static String getAccounts(User user) {
+        try (Connection connection = DBConnection.getConnection()) {
+            if (connection == null)
+                throw new SQLException(CONNECTION_NULL);
+
+            connection.setAutoCommit(false);
+
+            Set<Account> accountSet = getUserAccounts(connection, user);
+            if (accountSet == null || accountSet.isEmpty())
+                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
+
+            List<Account> censuredAccounts = accountSet.parallelStream()
+                    .map(account ->
+                    new Account(null, account.getAccount(), account.getAmount(), account.getCurrency(), null))
+                    .collect(Collectors.toList());
+
+            connection.commit();
+            return new Response(RespStatus.SUCCESS, GET_ACCOUNTS,
+                    new GetAccountsResult(censuredAccounts))
+                    .toJson();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+        }
+    }
+
+    /**
      * update user's account money amount
      * @param accountDao dao with connection
      * @param account user account entity
@@ -228,5 +220,40 @@ public class DaoManager {
         accountDao.updateAccountAmount(account.getId(), newSourceAmount);
 
         return newSourceAmount;
+    }
+
+    /**
+     * get all client's accounts from database
+     * @param connection database connection
+     * @param user user entity without id
+     * @return Set of client's accounts
+     * @throws SQLException if a database access error occurs
+     */
+    private static Set<Account> getUserAccounts(Connection connection, User user) throws SQLException {
+        UserDao userDao = new UserDaoImpl(connection);
+        User existedClient = userDao.getUser(user);
+        if (existedClient == null)
+            return null;
+
+        AccountDao accountDao = new AccountDaoImpl(connection);
+        return accountDao.getUserAccounts(existedClient.getId());
+    }
+
+    /**
+     * get client's account by account number from database
+     * @param connection database connection
+     * @param user user entity without id
+     * @param userAccountNum user's account number
+     * @return client's account
+     * @throws SQLException if a database access error occurs
+     */
+    private static Account getUserAccount(Connection connection, User user, long userAccountNum) throws SQLException {
+        UserDao userDao = new UserDaoImpl(connection);
+        User existedUser = userDao.getUser(user);
+        if (existedUser == null)
+            return null;
+
+        AccountDao accountDao = new AccountDaoImpl(connection);
+        return accountDao.getAccountById(userAccountNum);
     }
 }

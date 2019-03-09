@@ -14,7 +14,8 @@ public class RespConstants {
     public static final String CONNECTION_NULL = "DataBase connection is null";
     public static final String DB_ACCESS_ERROR = "database access error occurs";
 
-    public static final String CREATE_SUCCESS = "New applicant account created Successfully";
-    public static final String DELETE_SUCCESS = "The applicant account deleted Successfully";
+    public static final String CREATE_SUCCESS = "New applicant account created successfully";
+    public static final String DELETE_SUCCESS = "The applicant account deleted successfully";
     public static final String MONEY_TRANSFER = "Funds successfully transferred";
+    public static final String GET_ACCOUNTS = "User accounts extracted successfully";
 }

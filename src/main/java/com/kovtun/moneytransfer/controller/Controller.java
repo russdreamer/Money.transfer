@@ -1,13 +1,18 @@
-package com.kovtun.moneytransfer.handler;
+package com.kovtun.moneytransfer.controller;
 
+import com.kovtun.moneytransfer.currency.Currency;
 import com.kovtun.moneytransfer.dao.DaoManager;
 import com.kovtun.moneytransfer.dto.User;
+import com.kovtun.moneytransfer.response.RespStatus;
+import com.kovtun.moneytransfer.response.Response;
 import spark.Request;
 
 import java.sql.Date;
 
 import static com.kovtun.moneytransfer.constant.RequestConstants.*;
+import static com.kovtun.moneytransfer.constant.RespConstants.WRONG_PARAMS;
 import static com.kovtun.moneytransfer.constant.ServerConstants.DEFAULT_SERVER_PORT;
+import static com.kovtun.moneytransfer.validator.ParamValidator.*;
 import static spark.Spark.*;
 
 public class Controller {
@@ -26,8 +31,22 @@ public class Controller {
     private void handleRequest() {
         post(CREATE_ACCOUNT, (req, res) -> createAccount(req));
         delete(DELETE_ACCOUNT, (req, res) -> deleteAccount(req));
+        get(GET_ACCOUNTS, (req, res) -> getAccounts(req));
         put(TRANSFER_MONEY, (req, res) -> transferMoney(req));
         put(TOP_UP, (req, res) -> topUpAccount(req));
+    }
+
+    /**
+     * get all client's accounts
+     * @param req received request
+     * @return result response as json
+     */
+    private String getAccounts(Request req) {
+        User user = getUser(req);
+        if (isUserFieldsNotValid(user))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+
+        return DaoManager.getAccounts(user);
     }
 
     /**
@@ -38,7 +57,10 @@ public class Controller {
     private String createAccount(Request req) {
         User user = getUser(req);
         String currency = req.queryParams(CURRENCY);
-        return DaoManager.createAccount(user, currency);
+        if (isUserFieldsNotValid(user) || isCurrencyNotValid(currency))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+
+        return DaoManager.createAccount(user, Currency.valueOf(currency));
     }
 
     /**
@@ -49,7 +71,10 @@ public class Controller {
     private String deleteAccount(Request req) {
         User user = getUser(req);
         String accountNum = req.queryParams(ACCOUNT_NUMBER);
-        return DaoManager.deleteAccount(user, accountNum);
+        if (isUserFieldsNotValid(user) || isNotValidLong(accountNum))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+
+        return DaoManager.deleteAccount(user, Long.valueOf(accountNum));
     }
 
     /**
@@ -63,7 +88,10 @@ public class Controller {
         String targetAccount = req.queryParams(TARGET_ACCOUNT);
         String amount = req.queryParams(AMOUNT);
         String currency = req.queryParams(CURRENCY);
-        return DaoManager.transferMoney(user, accountNum, targetAccount, amount, currency);
+        if (isUserFieldsNotValid(user) || isNotValidLong(accountNum, targetAccount, amount) || isCurrencyNotValid(currency))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+
+        return DaoManager.transferMoney(user, Long.valueOf(accountNum), Long.valueOf(targetAccount), Long.valueOf(amount), Currency.valueOf(currency));
     }
 
     /**
@@ -75,7 +103,10 @@ public class Controller {
         String accountNum = req.queryParams(ACCOUNT_NUMBER);
         String amount = req.queryParams(AMOUNT);
         String currency = req.queryParams(CURRENCY);
-        return DaoManager.topUpAccount(accountNum, amount, currency);
+        if ( isNotValidLong(accountNum, amount) || isCurrencyNotValid(currency))
+            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+
+        return DaoManager.topUpAccount(Long.valueOf(accountNum), Long.valueOf(amount), Currency.valueOf(currency));
     }
 
     /**

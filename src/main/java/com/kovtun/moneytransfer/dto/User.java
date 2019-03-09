@@ -3,7 +3,7 @@ package com.kovtun.moneytransfer.dto;
 import java.sql.Date;
 
 public class User {
-    private long id;
+    private Long id;
     private String firstName;
     private String secondName;
     private String patronymicName;
@@ -20,7 +20,7 @@ public class User {
         this.birthdate = birthdate;
     }
 
-    public User(long id, String fName, String sName, String pName, String passportNum, Date birthdate) {
+    public User(Long id, String fName, String sName, String pName, String passportNum, Date birthdate) {
         this.id = id;
         this.firstName = fName;
         this.secondName = sName;
@@ -29,7 +29,7 @@ public class User {
         this.birthdate = birthdate;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 

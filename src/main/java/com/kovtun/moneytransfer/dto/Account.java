@@ -3,22 +3,22 @@ package com.kovtun.moneytransfer.dto;
 import com.kovtun.moneytransfer.currency.Currency;
 
 public class Account {
-    private long id;
-    private long account;
-    private long amount;
+    private Long id;
+    private Long account;
+    private Long amount;
     private Currency currency;
-    private long holderId;
+    private Long holderId;
 
     public Account() {}
 
-    public Account(long account, long amount, Currency currency, long holderId) {
+    public Account(Long account, Long amount, Currency currency, Long holderId) {
         this.account = account;
         this.amount = amount;
         this.currency = currency;
         this.holderId = holderId;
     }
 
-    public Account(long id, long account, long amount, Currency currency, long holderId) {
+    public Account(Long id, Long account, Long amount, Currency currency, Long holderId) {
         this.id = id;
         this.account = account;
         this.amount = amount;
@@ -26,15 +26,15 @@ public class Account {
         this.holderId = holderId;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public long getAccount() {
+    public Long getAccount() {
         return account;
     }
 
-    public long getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
@@ -42,7 +42,7 @@ public class Account {
         return currency;
     }
 
-    public long getHolderId() {
+    public Long getHolderId() {
         return holderId;
     }
 }

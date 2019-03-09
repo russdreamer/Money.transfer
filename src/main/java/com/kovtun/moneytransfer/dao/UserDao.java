@@ -23,9 +23,9 @@ public interface UserDao {
 
     /**
      * get an account holder user by id
-     * @param userId account holder id
+     * @param user account holder user
      * @return account holder user; <code>null</code> if there is no user with this ID
      * @throws SQLException if a database access error occurs
      */
-    User getUser(long userId) throws SQLException;
+    User getUser(User user) throws SQLException;
 }
