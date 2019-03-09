@@ -24,10 +24,10 @@ public class Controller {
      * handle and process REST API requests on server
      */
     private void handleRequest() {
-        get(CREATE_ACCOUNT, (req, res) -> createAccount(req));
-        get(DELETE_ACCOUNT, (req, res) -> deleteAccount(req));
-        get(TRANSFER_MONEY, (req, res) -> transferMoney(req));
-        get(TOP_UP, (req, res) -> topUpAccount(req));
+        post(CREATE_ACCOUNT, (req, res) -> createAccount(req));
+        delete(DELETE_ACCOUNT, (req, res) -> deleteAccount(req));
+        put(TRANSFER_MONEY, (req, res) -> transferMoney(req));
+        put(TOP_UP, (req, res) -> topUpAccount(req));
     }
 
     /**
