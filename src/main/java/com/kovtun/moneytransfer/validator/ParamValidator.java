@@ -31,7 +31,7 @@ public class ParamValidator {
         try {
             Currency.valueOf(accountCurrency);
             return false;
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return true;
         }
     }
@@ -70,7 +70,7 @@ public class ParamValidator {
         for (String item: longValue) {
             try {
                 Long.valueOf(item);
-            } catch (NumberFormatException e) {
+            } catch (Exception e) {
                 return true;
             }
         }
