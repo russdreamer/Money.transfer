@@ -23,17 +23,16 @@ public class ParamValidator {
     }
 
     /**
-     * check if currency is valid
-     * @param accountCurrency money currency
-     * @return <code>true</code> if currency is not valid; <code>false</code> if currency is valid
+     * check if any of the objects is null
+     * @param objects objects to check
+     * @return <code>true</code>  if any object is null; <code>false</code> if all the fields aren't null
      */
-    public static boolean isCurrencyNotValid(String accountCurrency) {
-        try {
-            Currency.valueOf(accountCurrency);
-            return false;
-        } catch (Exception e) {
-            return true;
+    public static boolean isNull(Object... objects) {
+        for (Object object: objects) {
+            if (object == null)
+                return true;
         }
+        return false;
     }
 
     /**
@@ -86,9 +85,9 @@ public class ParamValidator {
      * @return <code>true</code> if client has enough money for transaction;
      * <code>false</code> if client doesn't have enough money
      */
-    public static boolean isEnoughMoney(Account userAccount, Currency targetCur, long targetAmount, CurrencyConverter moneyRate){
+    public static boolean isNotEnoughMoney(Account userAccount, Currency targetCur, long targetAmount, CurrencyConverter moneyRate){
         long amountInUserCur = moneyRate.convert(targetCur, targetAmount, userAccount.getCurrency());
         long nextAccountBalance = userAccount.getAmount() - amountInUserCur;
-        return nextAccountBalance >= 0;
+        return nextAccountBalance < 0;
     }
 }

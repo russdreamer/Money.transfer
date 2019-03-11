@@ -27,7 +27,7 @@ public class DaoManager {
      */
     public static String createAccount(User user, Currency accountCurrency) {
         if (isUserUnderage(user))
-            return new Response(RespStatus.ERROR, UNDERAGE, null).toJson();
+            return new Response<>(RespStatus.ERROR, UNDERAGE, null).toJson();
 
         try (Connection connection = DBConnection.getConnection()) {
             if (connection == null)
@@ -47,13 +47,13 @@ public class DaoManager {
             else newAccountNum = accountDao.createAccount(existedUser.getId(), accountCurrency);
 
             connection.commit();
-            return new Response(RespStatus.SUCCESS, CREATE_SUCCESS,
+            return new Response<>(RespStatus.SUCCESS, CREATE_SUCCESS,
                     new CreateAccountResult(newAccountNum, 0, accountCurrency))
                     .toJson();
 
         } catch (SQLException e) {
             e.printStackTrace();
-            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+            return new Response<>(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -71,29 +71,29 @@ public class DaoManager {
 
             Set<Account> accountSet = getUserAccounts(connection, user);
             if (accountSet == null || accountSet.isEmpty())
-                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
             Optional<Account> account = accountSet.parallelStream()
                     .filter(it -> it.getAccount() == accountNum)
                     .findFirst();
 
             if ( !account.isPresent() )
-                return new Response(RespStatus.ERROR, NO_USER, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
+            new AccountDaoImpl(connection).deleteAccount(accountNum);
             /* if it is the only user's account - delete user as well */
             if (accountSet.size() == 1)
                 new UserDaoImpl(connection).deleteUser(account.get().getHolderId());
 
-            new AccountDaoImpl(connection).deleteAccount(accountNum);
             connection.commit();
 
             Result result = new DeleteAccountResult(accountNum, account.get().getAmount(),
                     account.get().getCurrency(), accountSet.size() > 1);
-            return new Response(RespStatus.SUCCESS, DELETE_SUCCESS, result).toJson();
+            return new Response<>(RespStatus.SUCCESS, DELETE_SUCCESS, result).toJson();
 
         } catch (SQLException e) {
             e.printStackTrace();
-            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+            return new Response<>(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -115,28 +115,28 @@ public class DaoManager {
 
             Account sourceAccount = getUserAccount(connection, user, userAccountNum);
             if (sourceAccount == null)
-                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
             AccountDao accountDao = new AccountDaoImpl(connection);
             Account targetAccount = accountDao.getAccountById(targetAccountNum);
             if (targetAccount == null)
-                return new Response(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
 
             CurrencyConverter currentMoneyRate = new CurrencyConverter();
-            if ( isEnoughMoney(sourceAccount, currency, amount, currentMoneyRate) )
-                return new Response(RespStatus.ERROR, NOT_ENOUGH_MONEY, null).toJson();
+            if ( isNotEnoughMoney(sourceAccount, currency, amount, currentMoneyRate) )
+                return new Response<>(RespStatus.ERROR, NOT_ENOUGH_MONEY, null).toJson();
 
             long newUserAmount = updateUserBalance(accountDao, sourceAccount, 0 - amount, currency, currentMoneyRate);
             updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
 
             connection.commit();
-            return new Response(RespStatus.SUCCESS, MONEY_TRANSFER,
+            return new Response<>(RespStatus.SUCCESS, MONEY_TRANSFER,
                     new MoneyTransferResult(userAccountNum, newUserAmount, sourceAccount.getCurrency()))
                     .toJson();
 
         } catch (SQLException | IOException e) {
             e.printStackTrace();
-            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+            return new Response<>(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -157,19 +157,19 @@ public class DaoManager {
             Account targetAccount = accountDao.getAccountById(accountNum);
 
             if (targetAccount == null)
-                return new Response(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_TARGET_ACCOUNTS, null).toJson();
 
             CurrencyConverter currentMoneyRate = new CurrencyConverter();
             long newAmount = updateUserBalance(accountDao, targetAccount, amount, currency, currentMoneyRate);
 
             connection.commit();
-            return new Response(RespStatus.SUCCESS, MONEY_TRANSFER,
+            return new Response<>(RespStatus.SUCCESS, MONEY_TRANSFER,
                     new MoneyTransferResult(accountNum, newAmount, targetAccount.getCurrency()))
                     .toJson();
 
         } catch (SQLException | IOException e) {
             e.printStackTrace();
-            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+            return new Response<>(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 
@@ -187,7 +187,7 @@ public class DaoManager {
 
             Set<Account> accountSet = getUserAccounts(connection, user);
             if (accountSet == null || accountSet.isEmpty())
-                return new Response(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
+                return new Response<>(RespStatus.ERROR, NO_USER_ACCOUNTS, null).toJson();
 
             List<Account> censuredAccounts = accountSet.parallelStream()
                     .map(account ->
@@ -195,13 +195,13 @@ public class DaoManager {
                     .collect(Collectors.toList());
 
             connection.commit();
-            return new Response(RespStatus.SUCCESS, GET_ACCOUNTS,
+            return new Response<>(RespStatus.SUCCESS, GET_ACCOUNTS,
                     new GetAccountsResult(censuredAccounts))
                     .toJson();
 
         } catch (SQLException e) {
             e.printStackTrace();
-            return new Response(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
+            return new Response<>(RespStatus.ERROR, DB_ACCESS_ERROR, null).toJson();
         }
     }
 

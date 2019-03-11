@@ -1,8 +1,11 @@
 package com.kovtun.moneytransfer.controller;
 
+import com.google.gson.Gson;
 import com.kovtun.moneytransfer.currency.Currency;
 import com.kovtun.moneytransfer.dao.DaoManager;
 import com.kovtun.moneytransfer.dto.User;
+import com.kovtun.moneytransfer.request.CreateAccountRequest;
+import com.kovtun.moneytransfer.request.MoneyTransferRequest;
 import com.kovtun.moneytransfer.response.RespStatus;
 import com.kovtun.moneytransfer.response.Response;
 import spark.Request;
@@ -44,7 +47,7 @@ public class Controller {
     private String getAccounts(Request req) {
         User user = getUser(req);
         if (isUserFieldsNotValid(user))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+            return new Response<>(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         return DaoManager.getAccounts(user);
     }
@@ -55,12 +58,13 @@ public class Controller {
      * @return result response as json
      */
     private String createAccount(Request req) {
-        User user = getUser(req);
-        String currency = req.queryParams(CURRENCY);
-        if (isUserFieldsNotValid(user) || isCurrencyNotValid(currency))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+        CreateAccountRequest request = new Gson().fromJson(req.body(), CreateAccountRequest.class);
+        User user = request.getUser();
+        Currency currency = request.getCurrency();
+        if (isUserFieldsNotValid(user) || isNull(currency))
+            return new Response<>(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
-        return DaoManager.createAccount(user, Currency.valueOf(currency));
+        return DaoManager.createAccount(user, currency);
     }
 
     /**
@@ -72,7 +76,7 @@ public class Controller {
         User user = getUser(req);
         String accountNum = req.queryParams(ACCOUNT_NUMBER);
         if (isUserFieldsNotValid(user) || isNotValidLong(accountNum))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+            return new Response<>(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
         return DaoManager.deleteAccount(user, Long.valueOf(accountNum));
     }
@@ -83,15 +87,16 @@ public class Controller {
      * @return result response as json
      */
     private String transferMoney(Request req) {
-        User user = getUser(req);
-        String accountNum = req.queryParams(ACCOUNT_NUMBER);
-        String targetAccount = req.queryParams(TARGET_ACCOUNT);
-        String amount = req.queryParams(AMOUNT);
-        String currency = req.queryParams(CURRENCY);
-        if (isUserFieldsNotValid(user) || isNotValidLong(accountNum, targetAccount, amount) || isCurrencyNotValid(currency))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+        MoneyTransferRequest request = new Gson().fromJson(req.body(), MoneyTransferRequest.class);
+        User user = request.getUser();
+        long accountNum = request.getAccountNum();
+        long targetAccount = request.getTargetAccountNum();
+        long amount = request.getAmount();
+        Currency currency = request.getCurrency();
+        if (isUserFieldsNotValid(user) || isNull(accountNum, targetAccount, amount, currency) || amount < 0)
+            return new Response<>(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
-        return DaoManager.transferMoney(user, Long.valueOf(accountNum), Long.valueOf(targetAccount), Long.valueOf(amount), Currency.valueOf(currency));
+        return DaoManager.transferMoney(user, accountNum, targetAccount, amount, currency);
     }
 
     /**
@@ -100,13 +105,14 @@ public class Controller {
      * @return result response as json
      */
     private String topUpAccount(Request req) {
-        String accountNum = req.queryParams(ACCOUNT_NUMBER);
-        String amount = req.queryParams(AMOUNT);
-        String currency = req.queryParams(CURRENCY);
-        if ( isNotValidLong(accountNum, amount) || isCurrencyNotValid(currency))
-            return new Response(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
+        MoneyTransferRequest request = new Gson().fromJson(req.body(), MoneyTransferRequest.class);
+        long accountNum = request.getAccountNum();
+        long amount = request.getAmount();
+        Currency currency = request.getCurrency();
+        if ( isNull(accountNum, amount, currency) || amount < 0)
+            return new Response<>(RespStatus.ERROR, WRONG_PARAMS, null).toJson();
 
-        return DaoManager.topUpAccount(Long.valueOf(accountNum), Long.valueOf(amount), Currency.valueOf(currency));
+        return DaoManager.topUpAccount(accountNum, amount, currency);
     }
 
     /**

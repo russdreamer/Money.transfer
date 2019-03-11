@@ -6,7 +6,6 @@ public class RespConstants {
     public static final String WRONG_PARAMS = "Wrong incoming params";
     public static final String UNDERAGE = "The minor applicant";
 
-    public static final String NO_USER = "There is no user found with these parameters";
     public static final String NO_USER_ACCOUNTS = "There is no user's accounts are found";
     public static final String NO_TARGET_ACCOUNTS = "There is no target accounts are found";
     public static final String NOT_ENOUGH_MONEY = "Not enough money for the transaction";
