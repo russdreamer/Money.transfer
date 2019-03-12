@@ -13,7 +13,7 @@ import com.kovtun.moneytransfer.dto.User;
 import com.kovtun.moneytransfer.response.GetAccountsResult;
 import com.kovtun.moneytransfer.response.RespStatus;
 import com.kovtun.moneytransfer.response.Response;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import server.Server;
 
@@ -25,8 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static server.Server.testServer;
 
 public class GetAccountsTest {
-    @Before
-    public void CreateUserAccount() {
+    @BeforeClass
+    public static void CreateUserAccount() {
         SparkServer<Server> server = testServer;
         User user = new User("Иван", "Иванов", "Иванович", "1234567890", Date.valueOf("1990-10-20"));
         DaoManager.createAccount(user, Currency.RUB);
