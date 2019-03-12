@@ -64,7 +64,7 @@ public class GetAccountsTest {
     }
 
     private Response<GetAccountsResult> sendServerRequest(String body) throws HttpClientException {
-        GetMethod get = testServer.get(GET_ACCOUNTS + body, false);
+        GetMethod get = testServer.get(ACCOUNTS + body, false);
         HttpResponse httpResponse = testServer.execute(get);
         Type apiResultType = new TypeToken<Response<GetAccountsResult>>() { }.getType();
         return new Gson().fromJson(new String(httpResponse.body()), apiResultType);

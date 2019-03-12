@@ -81,7 +81,7 @@ public class DeleteAccountTest {
     }
 
     private Response<DeleteAccountResult> sendServerRequest(String body) throws HttpClientException {
-        DeleteMethod delete = testServer.delete(DELETE_ACCOUNT + body, false);
+        DeleteMethod delete = testServer.delete(ACCOUNT + body, false);
 
         HttpResponse httpResponse = testServer.execute(delete);
         Type apiResultType = new TypeToken<Response<DeleteAccountResult>>() { }.getType();

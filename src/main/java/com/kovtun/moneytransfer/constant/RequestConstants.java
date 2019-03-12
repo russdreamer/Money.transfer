@@ -1,10 +1,9 @@
 package com.kovtun.moneytransfer.constant;
 
 public class RequestConstants {
-    public static final String CREATE_ACCOUNT = "/create_account";
+    public static final String ACCOUNT = "/account";
     public static final String TRANSFER_MONEY = "/transfer_money";
-    public static final String DELETE_ACCOUNT = "/delete_account";
-    public static final String GET_ACCOUNTS = "/get_accounts";
+    public static final String ACCOUNTS = "/accounts";
     public static final String TOP_UP = "/top_up_account";
 
     public static final String ID = "id";
@@ -15,7 +14,6 @@ public class RequestConstants {
     public static final String BIRTHDATE = "birthdate";
     public static final String CURRENCY = "currency";
     public static final String ACCOUNT_NUMBER = "account_number";
-    public static final String TARGET_ACCOUNT = "target_account";
     public static final String AMOUNT = "amount";
     public static final String HOLDER_ID = "holder_id";
 }

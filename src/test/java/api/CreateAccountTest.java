@@ -58,7 +58,7 @@ public class CreateAccountTest {
     }
 
     private Response<CreateAccountResult> sendServerRequest(String body) throws HttpClientException {
-        PostMethod post = testServer.post(CREATE_ACCOUNT, body, false);
+        PostMethod post = testServer.post(ACCOUNT, body, false);
         HttpResponse httpResponse = testServer.execute(post);
         Type apiResultType = new TypeToken<Response<CreateAccountResult>>() { }.getType();
         return new Gson().fromJson(new String(httpResponse.body()), apiResultType);
