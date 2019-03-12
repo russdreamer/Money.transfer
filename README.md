@@ -15,19 +15,19 @@ Every transaction is presented as RESTful API:
 
 **Create user's account:**
 >- method: POST
->- url: /create_account
+>- url: /account
 >- request body example: {"user":
 {"firstName":"Ivan",
 "secondName":"Ivanov","patronymicName":"Ivanovich","passportNum":"1234567890","birthdate":"Oct 20, 1990"},"currency":"RUB"}
 
 **Remove user's account:**
 >- method: DELETE
->- url: /delete_account
+>- url: /account
 >- request query example: first_name=Ivan&second_name=Ivanov&patronymic_name=Ivanovich&passport=1234567890&birthdate=1990-10-20&account_number=4444555566667777
 
 **Get all user's accounts:**
 >- method: GET
->- url: /get_accounts
+>- url: /accounts
 >- request query example: first_name=Ivan&second_name=Ivanov&patronymic_name=Ivanovich&passport=1234567890&birthdate=1990-10-20
 
 **Refill user;s account:**
