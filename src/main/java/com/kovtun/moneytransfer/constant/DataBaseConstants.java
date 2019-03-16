@@ -5,7 +5,7 @@ import static com.kovtun.moneytransfer.constant.RequestConstants.*;
 public class DataBaseConstants {
     /* DataBase connect */
     public static final String DB_DRIVER = "org.h2.Driver";
-    public static final String DB_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false";
+    public static final String DB_URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;LOCK_MODE=1;DATABASE_TO_UPPER=false";
 
     /* SQL requests */
     public static final String CREATE_USERS_TABLE_QUERY =  "CREATE TABLE Users " +
@@ -28,9 +28,9 @@ public class DataBaseConstants {
     public static final String DELETE_USER_QUERY =  "DELETE FROM Users WHERE id = ?";
     public static final String CREATE_ACCOUNT_QUERY =  "INSERT INTO Accounts VALUES (NULL, ?, ?, ?, ?)";
     public static final String DELETE_ACCOUNT_QUERY =  "DELETE FROM Accounts WHERE " + ACCOUNT_NUMBER + " = ?";
-    public static final String GET_ACCOUNT_BY_ID_QUERY =  "SELECT * FROM Accounts WHERE " + ACCOUNT_NUMBER + " = ?";
-    public static final String GET_USER_ACCOUNTS_QUERY =  "SELECT * FROM Accounts WHERE " + HOLDER_ID + " = ?";
+    public static final String GET_ACCOUNT_BY_ID_QUERY =  "SELECT * FROM Accounts WHERE " + ACCOUNT_NUMBER + " = ? FOR UPDATE";
+    public static final String GET_USER_ACCOUNTS_QUERY =  "SELECT * FROM Accounts WHERE " + HOLDER_ID + " = ? FOR UPDATE";
     public static final String UPDATE_ACCOUNT_AMOUNT =  "UPDATE Accounts SET " + AMOUNT + " = ? WHERE id = ?";
     public static final String GET_USER_QUERY =  "SELECT * FROM Users WHERE " + FIRST_NAME + " = ? AND " +
-            SECOND_NAME + " = ? AND " + PATRONYMIC_NAME + " = ? AND " + PASSPORT_NUM + " = ? AND " + BIRTHDATE + " = ?";
+            SECOND_NAME + " = ? AND " + PATRONYMIC_NAME + " = ? AND " + PASSPORT_NUM + " = ? AND " + BIRTHDATE + " = ? FOR UPDATE";
 }
